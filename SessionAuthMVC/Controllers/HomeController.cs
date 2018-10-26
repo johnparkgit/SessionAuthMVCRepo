@@ -6,14 +6,14 @@ using System.Web.Mvc;
 using SessionAuthMVC.Filters;
 namespace SessionAuthMVC.Controllers
 {
-    [UserAuthenticationFilter]
+    //[UserAuthenticationFilter]
     public class HomeController : Controller
     {
         public ActionResult Index()
         {
             return View();
         }
-
+        [UserAuthenticationFilter]
         public ActionResult About()
         {
             ViewBag.Message = "Your application description page.";
