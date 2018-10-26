@@ -328,8 +328,5 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
-/SessionAuthMVC/*.config
-/SessionAuthMVC/*.config
-*.csproj
-/SessionAuthMVC/*.csproj
-/SessionAuthMVC/*.config
+
+/SessionAuthMVC/web.config
