@@ -37,7 +37,7 @@ namespace SessionAuthMVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = new RegisterModel { UserID = model.UserID, Email = model.Email, FirstName = model.FirstName, LastName = model.LastName };
+                var user = new UsersModel { UserID = model.UserID, Email = model.Email, FirstName = model.FirstName, LastName = model.LastName };
                 UserManagerJohnService UserManager = new UserManagerJohnService();
                 var result = UserManager.Create(user, model.PasswordHash);
                 //    var user = new ApplicationUser { UserName = model.Email, Email = model.Email, NewRow = model.NewRow, Name = model.Name };

@@ -24,7 +24,104 @@ namespace SessionAuthMVC.Controllers
             ViewBag.ReturnUrl = returnUrl;
             return View();
         }
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public ActionResult Login(LoginViewModel model, string returnUrl)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Require the user to have a confirmed email before they can log on.
+            //var user = await UserManager.FindByNameAsync(model.Email);
+            UserManagerJohnService UserManager = new UserManagerJohnService();
+            var user = UserManager.FindByUserID(model.UserID);
+            if (user != null)
+            {
+                if (user.UserStatus != 1)
+                {
+                    ModelState.AddModelError("", "Invalid login attempt.");
+                    return View(model);
+                }
+                /* added by john: first time existing user login */
+                if (string.IsNullOrEmpty(user.PasswordHash))
+                {
+                    return View("ForgotPassword");
+                    //ViewBag.Message = "Your password need to reset";
+                    //return View("Error");
+                }
+                if (!UserManager.IsEmailConfirmed(user.ID))
+                {
+                    var code = UserManager.GenerateEmailConfirmationTokenAsync(user.ID);
+                    var callbackUrl = Url.Action("ConfirmEmail", "AccountJohnForm", new { userId = user.ID, code = code }, protocol: Request.Url.Scheme);
+
+                    SendVerificationLinkEmail(user.Email, callbackUrl);
+
+                   ViewBag.Message = "Check your email and confirm your account, you must be confirmed "
+                         + "before you can log in.";
+                    return View("Info");
+                }
+            }
+            //return View();
+
+            // This doesn't count login failures towards account lockout
+            // To enable password failures to trigger account lockout, change to shouldLockout: true
+            //returnUrl = ConfigurationManager.AppSettings["baseurl"];
+            //returnUrl = "localhost";
+            //            var result = await SignInManager.PasswordSignInAsync(model.UserName, model.Password, model.RememberMe, shouldLockout: true);
+
+            
+           // var result = UserManager.PasswordSignIn(model.UserName, model.Password, false, shouldLockout: true);
+            var result = UserManager.PasswordSignIn(model.UserID, model.Password);
+            switch (result)
+            {
+                case SignInStatus.Success:
+                    return RedirectToLocal(returnUrl);
+                //RememberMe(model.RememberMe, model.UserName); ******
+
+                /*
+                if (user.Title.ToUpper() == "ADMIN")
+                    //return Redirect(returnUrl);
+                    return RedirectToAction("Index", "Home");
+                else
+                    return RedirectToCMIS(user.UserName);
+                */
+
+                //return Redirect("http://localhost");
+                //private ActionResult RedirectToLocal(string returnUrl)
+                //{
+                //    if (Url.IsLocalUrl(returnUrl))
+                //    {
+                //        return Redirect(returnUrl);
+                //    }
+                //    return RedirectToAction("about", "Home");
+                //}
+                case SignInStatus.LockedOut:
+                    return View("Lockout");
+                //case SignInStatus.RequiresVerification:   // phone verifiation
+                //    return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
+                case SignInStatus.Failure:
+                default:
+                    ModelState.AddModelError("", "Invalid login attempt.");
+                    return View(model);
+            }
+            
+        }
+
+        private ActionResult RedirectToLocal(string returnUrl)
+        {
+            if (Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+            return RedirectToAction("Index", "Home");
+        }
+
+
         //[UserAuthenticationFilter]
+        [Authorize]
         public ActionResult Register()
         {
             return View();
@@ -41,15 +138,17 @@ namespace SessionAuthMVC.Controllers
             
             if (ModelState.IsValid)
             {
-                var user = new RegisterModel { UserID = model.UserID, Email = model.Email, FirstName = model.FirstName, LastName = model.LastName };
+                var user = new UsersModel { UserID = model.UserID, Email = model.Email, FirstName = model.FirstName, LastName = model.LastName };
                 UserManagerJohnService UserManager = new UserManagerJohnService();
                 var result = UserManager.Create(user, model.PasswordHash);
                 //    var user = new ApplicationUser { UserName = model.Email, Email = model.Email, NewRow = model.NewRow, Name = model.Name };
                 //    var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    var activationCode = Guid.NewGuid().ToString();
-                    SendVerificationLinkEmail(model.Email, activationCode);
+                    var code = UserManager.GenerateEmailConfirmationTokenAsync(user.ID);
+                    var callbackUrl = Url.Action("ConfirmEmail", "AccountJohnForm", new { userId = user.ID, code = code }, protocol: Request.Url.Scheme);
+
+                    SendVerificationLinkEmail(user.Email, callbackUrl);
 
                     //        await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
 
@@ -58,8 +157,9 @@ namespace SessionAuthMVC.Controllers
                     //        // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
                     //        // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
                     //        // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
-
-                    return RedirectToAction("Index", "Home");
+                    ViewBag.Message = "Check your email and confirm your account, you must be confirmed "
+                         + "before you can log in.";
+                    return View("Info");
                 }
                 ModelState.AddModelError("",result.ErrorMessage);
                 //    AddErrors(result);
@@ -69,10 +169,10 @@ namespace SessionAuthMVC.Controllers
             return View(model);
         }
 
-        public void SendVerificationLinkEmail(string emailID, string activationCode)
+        public void SendVerificationLinkEmail(string emailID, string callbackUrl)
         {
-            var verifyUrl = "/User/VerifyAccount/" + activationCode;
-            var link = Request.Url.AbsoluteUri.Replace(Request.Url.PathAndQuery, verifyUrl);
+            //var verifyUrl = "/User/VerifyAccount/" + activationCode;
+            //var link = Request.Url.AbsoluteUri.Replace(Request.Url.PathAndQuery, verifyUrl);
 
             var fromEmail = new MailAddress("junsoft2000@gmail.com", "John");
             var toEmail = new MailAddress(emailID);
@@ -81,7 +181,7 @@ namespace SessionAuthMVC.Controllers
             var link1 = "here";
             string body = "<br/><br/>We are excited to tell you that your Dotnet Awesome account is" +
                 " successfully created. Please click on the below link to verify your account" +
-                " <br/><br/><a href='" + link + "'>" + link1 + "</a> ";
+                " <br/><br/><a href='" + callbackUrl + "'>" + link1 + "</a> ";
 
             var smtp = new SmtpClient
             {
@@ -103,7 +203,7 @@ namespace SessionAuthMVC.Controllers
         }
 
         [HttpGet]
-        public ActionResult VerifyAccount(int UserID,string code)
+        public ActionResult ConfirmEmail(int UserID,string code)
         {
             if (UserID == default(int) || code == null)
             {

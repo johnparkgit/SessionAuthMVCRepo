@@ -50,9 +50,9 @@ namespace SessionAuthMVC.Models
     public class LoginViewModel
     {
         [Required]
-        [Display(Name = "Email")]
-        [EmailAddress]
-        public string Email { get; set; }
+        [Display(Name = "UserID")]
+        //[EmailAddress]
+        public string UserID { get; set; }
 
         [Required]
         [DataType(DataType.Password)]
@@ -88,7 +88,7 @@ namespace SessionAuthMVC.Models
         public string FirstName { get; set; }
     }
     [Table("users")]
-    public class RegisterModel
+    public class UsersModel
     {
         [Key]
         public int    ID { get; set; }
@@ -98,6 +98,8 @@ namespace SessionAuthMVC.Models
         public string LastName { get; set; }
         public string FirstName { get; set; }
         public string SecurityStamp { get; set; }
+        public int UserStatus { get; set; }
+        public int Try { get; set; }
         public Boolean EmailConfirmed { get; set; }
         public DateTime DateCreated { get; set; }
         public DateTime DateModified { get; set; }
@@ -136,5 +138,25 @@ namespace SessionAuthMVC.Models
     {
         public bool Succeeded { get; set; }
         public string ErrorMessage { get; set; }
+    }
+
+    public enum SignInStatus
+    {
+        //
+        // Summary:
+        //     Sign in was successful
+        Success = 0,
+        //
+        // Summary:
+        //     User is locked out
+        LockedOut = 1,
+        //
+        // Summary:
+        //     Sign in requires addition verification (i.e. two factor)
+        RequiresVerification = 2,
+        //
+        // Summary:
+        //     Sign in failed
+        Failure = 3
     }
 }

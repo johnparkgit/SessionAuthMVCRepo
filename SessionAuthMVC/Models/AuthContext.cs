@@ -10,7 +10,7 @@ namespace SessionAuthMVC.Models
         public AuthContext()
             : base("name=cstrAuth")
         {}
-        public DbSet<RegisterModel> users { get; set; }
+        public DbSet<UsersModel> users { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

@@ -214,6 +214,7 @@
     <Content Include="Views\AccountJohnForm\Login.cshtml" />
     <Content Include="Views\AccountJohnForm\Register.cshtml" />
     <Content Include="Views\AccountJohnForm\ConfirmEmail.cshtml" />
+    <Content Include="Views\AccountJohnForm\Info.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

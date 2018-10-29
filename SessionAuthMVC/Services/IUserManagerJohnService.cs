@@ -7,6 +7,6 @@ namespace SessionAuthMVC.Services
 {
     public interface IUserManagerJohnService
     {
-        IdentityResult Create(RegisterModel model, string password);
+        IdentityResult Create(UsersModel model, string password);
     }
 }
