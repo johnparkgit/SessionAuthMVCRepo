@@ -98,6 +98,7 @@ namespace SessionAuthMVC.Models
         public string LastName { get; set; }
         public string FirstName { get; set; }
         public string SecurityStamp { get; set; }
+        public Boolean EmailConfirmed { get; set; }
         public DateTime DateCreated { get; set; }
         public DateTime DateModified { get; set; }
     }

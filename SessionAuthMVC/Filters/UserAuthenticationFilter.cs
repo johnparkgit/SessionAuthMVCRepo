@@ -27,11 +27,14 @@ namespace SessionAuthMVC.Filters
         {
             //We are checking Result is null or Result is HttpUnauthorizedResult 
             // if yes then we are Redirect to Error View
+
             if (filterContext.Result == null || filterContext.Result is HttpUnauthorizedResult)
             {
+                
+                //filterContext.RequestContext.HttpContext.Response.Redirect("AccountJohn")
                 filterContext.Result = new ViewResult
                 {
-                    ViewName = "Error"
+                    ViewName = "Login"
                 };
             }
         }
