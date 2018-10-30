@@ -8,10 +8,12 @@ using SessionAuthMVC.Services;
 using SessionAuthMVC.Filters;
 using System.Net.Mail;
 using System.Net;
+using System.Web.Security;
+using System.Web.Script.Serialization;
 
 namespace SessionAuthMVC.Controllers
 {
-    public class AccountJohnFormController : Controller
+    public class AccountJohnFormController : BaseController
     {
         // GET: AccountJohn
         public ActionResult Index()
@@ -78,6 +80,24 @@ namespace SessionAuthMVC.Controllers
             switch (result)
             {
                 case SignInStatus.Success:
+                    //int timeout = login.RememberMe ? 525600 : 20; // 525600 min = 1 year
+                    int timeout = 20; // 525600 min = 1 year
+                    var serializer = new JavaScriptSerializer();
+                    var ticket = new FormsAuthenticationTicket(
+                        1,
+                        model.UserID,
+                        DateTime.Now,
+                        DateTime.Now.AddDays(30),
+                        true,
+                        serializer.Serialize(user),
+                        FormsAuthentication.FormsCookiePath
+                    );
+                    string encrypted = FormsAuthentication.Encrypt(ticket);
+                    var cookie = new HttpCookie(FormsAuthentication.FormsCookieName, encrypted);
+                    cookie.Expires = DateTime.Now.AddMinutes(timeout);
+                    cookie.HttpOnly = true;
+                    Response.Cookies.Add(cookie);
+
                     return RedirectToLocal(returnUrl);
                 //RememberMe(model.RememberMe, model.UserName); ******
 
@@ -119,7 +139,16 @@ namespace SessionAuthMVC.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult LogOff()
+        {
 
+            FormsAuthentication.SignOut();
+            return RedirectToAction("Login", "AccountJohnForm");
+            //AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
+            //return RedirectToAction("Index", "Home");
+        }
         //[UserAuthenticationFilter]
         [Authorize]
         public ActionResult Register()
